@@ -1,6 +1,6 @@
 import prisma from "../prisma/prisma.js";
 
-export const onlyadmin = async (req, res, next) => {
+const onlyadmin = async (req, res, next) => {
   const userId = req.user.userId;
 
   const user = await prisma.user.findUnique({
@@ -16,3 +16,5 @@ export const onlyadmin = async (req, res, next) => {
   }
   next();
 };
+
+export default onlyadmin;

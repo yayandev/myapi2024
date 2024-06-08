@@ -15,7 +15,7 @@ import {
 } from "../controllers/UserController.js";
 import authenticate from "../middlewares/authenticate.js";
 import upload from "../utils/multer.js";
-import { onlyadmin } from "../middlewares/onlyadmin.js";
+import onlyadmin from "../middlewares/onlyadmin.js";
 const UserRoute = Router();
 
 // all users
