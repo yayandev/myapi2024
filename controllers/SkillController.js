@@ -1,6 +1,11 @@
 import prisma from "../prisma/prisma.js";
 import storage from "../utils/firebase.js";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
 // only admin
 export const getAllSkills = async (req, res) => {
   try {
@@ -157,9 +162,58 @@ export const getSkillByIdPublic = async (req, res) => {
         },
       },
     });
+
+    if (!skill) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Skill not found" });
+    }
+
     res
       .status(200)
       .json({ success: true, data: skill, message: "Skill Found" });
+  } catch (error) {
+    console.log("Error: " + error.message);
+    return res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+export const deleteSkill = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const { id } = req.params;
+
+    const skill = await prisma.skill.findUnique({
+      where: {
+        id: id,
+        AND: {
+          authorId: userId,
+        },
+      },
+    });
+
+    if (!skill) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Skill not found" });
+    }
+
+    const deletedSkill = await prisma.skill.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    const imageRef = skill.imageRef;
+
+    const storageRef = ref(storage, imageRef);
+
+    await deleteObject(storageRef);
+
+    res
+      .status(200)
+      .json({ success: true, data: deletedSkill, message: "Skill Deleted" });
   } catch (error) {
     console.log("Error: " + error.message);
     return res.status(500).json({ success: false, message: "Server Error" });

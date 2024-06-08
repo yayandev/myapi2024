@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   createSkill,
+  deleteSkill,
   getAllSkills,
   getAllSkillsPublic,
   getSkillById,
@@ -14,6 +15,7 @@ const SkillRoute = Router();
 SkillRoute.get("/skills", authenticate, onlyadmin, getAllSkills);
 SkillRoute.get("/skills/:id", authenticate, onlyadmin, getSkillById);
 SkillRoute.post("/skills", authenticate, upload.single("file"), createSkill);
+SkillRoute.delete("/skills/:id", authenticate, deleteSkill);
 
 // public
 SkillRoute.get("/public/skills", getAllSkillsPublic);
