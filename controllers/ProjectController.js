@@ -19,6 +19,8 @@ export const createProject = async (req, res) => {
         .json({ success: false, message: "All fields are required" });
     }
 
+    const skillsArray = JSON.parse(skills);
+
     const imageRef = `projects/${userId}/${file.originalname + Date.now()}`;
 
     const storageRef = ref(storage, imageRef);
@@ -37,29 +39,33 @@ export const createProject = async (req, res) => {
       data: {
         title,
         description,
-        skillsIds: JSON.parse(skills),
+        skillsIds: skillsArray,
         image: url,
         imageRef: imageRef,
         authorId: userId,
       },
     });
 
-    // append id project to skills
+    // Append project ID to skills' projectsIds
+    await Promise.all(
+      skillsArray.map(async (skillId) => {
+        const skill = await prisma.skill.findUnique({
+          where: { id: skillId },
+        });
 
-    JSON.parse(skills).forEach(async (skillId) => {
-      await prisma.skill.update({
-        where: {
-          id: skillId,
-        },
-        data: {
-          projects: {
-            connect: {
-              id: project.id,
+        await prisma.skill.update({
+          where: { id: skillId },
+          data: {
+            projects: {
+              connect: { id: project.id },
+            },
+            projectsIds: {
+              set: [...skill.projectsIds, project.id],
             },
           },
-        },
-      });
-    });
+        });
+      })
+    );
 
     if (project) {
       return res.status(201).json({
@@ -257,13 +263,11 @@ export const deleteProject = async (req, res) => {
       })
     );
 
-    return res
-      .status(200)
-      .json({
-        success: true,
-        data: deletedProject,
-        message: "Project deleted successfully",
-      });
+    return res.status(200).json({
+      success: true,
+      data: deletedProject,
+      message: "Project deleted successfully",
+    });
   } catch (error) {
     console.log("Error: " + error.message);
     return res.status(500).json({ success: false, message: "Server Error" });
