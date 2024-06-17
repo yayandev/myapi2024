@@ -23,6 +23,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   skills Skill[]
+  projects Project[]
 }
 
 
@@ -35,4 +36,22 @@ model Skill {
   authorId String @db.ObjectId
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  projectsIds String[] @db.ObjectId
+  projects Project[] @relation(fields: [projectsIds], references: [id])
 }
+
+model Project {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  title String
+  image String
+  imageRef String
+  author User @relation(fields: [authorId], references: [id])
+  authorId String @db.ObjectId
+  skillsIds String[] @db.ObjectId
+  skills Skill[] @relation(fields: [skillsIds], references: [id])
+  description String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+

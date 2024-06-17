@@ -6,6 +6,7 @@ import {
   getDownloadURL,
   deleteObject,
 } from "firebase/storage";
+
 // only admin
 export const getAllSkills = async (req, res) => {
   try {
@@ -160,6 +161,8 @@ export const getSkillByIdPublic = async (req, res) => {
             avatar: true,
           },
         },
+        projects: true,
+        projectsIds: true,
       },
     });
 
@@ -172,6 +175,36 @@ export const getSkillByIdPublic = async (req, res) => {
     res
       .status(200)
       .json({ success: true, data: skill, message: "Skill Found" });
+  } catch (error) {
+    console.log("Error: " + error.message);
+    return res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+export const getSkillByAuthorId = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const skills = await prisma.skill.findMany({
+      where: {
+        authorId: userId,
+      },
+      select: {
+        id: true,
+        name: true,
+        image: true,
+        authorId: true,
+        author: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+
+    res.status(200).json({ success: true, data: skills, message: "My Skills" });
   } catch (error) {
     console.log("Error: " + error.message);
     return res.status(500).json({ success: false, message: "Server Error" });
@@ -216,6 +249,99 @@ export const deleteSkill = async (req, res) => {
       .json({ success: true, data: deletedSkill, message: "Skill Deleted" });
   } catch (error) {
     console.log("Error: " + error.message);
+    return res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+export const updateSkill = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const id = req.params.id;
+
+    const { name } = req.body;
+
+    const skill = await prisma.skill.findUnique({
+      where: {
+        id: id,
+        AND: {
+          authorId: userId,
+        },
+      },
+    });
+
+    if (!skill) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Skill not found" });
+    }
+
+    const file = req.file;
+
+    if (file) {
+      const oldImageRef = skill.imageRef;
+      const imageRef = `skills/${userId}/${file.originalname + Date.now()}`;
+
+      const storageRef = ref(storage, imageRef);
+
+      const metadata = {
+        contentType: file.mimetype,
+        contentDisposition: `inline; filename="${file.originalname}"`,
+      };
+
+      uploadBytes(storageRef, file.buffer, metadata).then((snapshot) => {
+        getDownloadURL(snapshot.ref)
+          .then((url) => {
+            prisma.skill
+              .update({
+                where: {
+                  id: id,
+                },
+                data: {
+                  name: name,
+                  image: url,
+                  imageRef: imageRef,
+                },
+              })
+              .then(async (updatedSkill) => {
+                const storageRef = ref(storage, oldImageRef);
+                await deleteObject(storageRef);
+
+                res.status(200).json({
+                  success: true,
+                  data: updatedSkill,
+                  message: "Skill Updated",
+                });
+              })
+              .catch((error) => {
+                console.log("Error : ".error.message);
+                return res
+                  .status(500)
+                  .json({ success: false, message: "Server Error" });
+              });
+          })
+          .catch((error) => {
+            console.log("Error : ".error.message);
+            return res
+              .status(500)
+              .json({ success: false, message: "Server Error" });
+          });
+      });
+    } else {
+      const update = await prisma.skill.update({
+        where: {
+          id: id,
+        },
+        data: {
+          name: name,
+        },
+      });
+
+      res
+        .status(200)
+        .json({ success: true, data: update, message: "Skill Updated" });
+    }
+  } catch (error) {
+    console.log("Error : ".error.message);
     return res.status(500).json({ success: false, message: "Server Error" });
   }
 };
