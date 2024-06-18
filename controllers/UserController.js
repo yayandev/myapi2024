@@ -3,6 +3,7 @@ import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
 import storage from "../utils/firebase.js";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { tokenBlacklist } from "../utils/Token.js";
 
 export const getAllUsers = async (req, res) => {
   try {
@@ -152,19 +153,19 @@ export const login = async (req, res) => {
         const accessToken = jwt.sign(
           { userId: user.id },
           process.env.ACCESS_TOKEN_SECRET,
-          { expiresIn: "15m" }
-        );
-
-        const refreshToken = jwt.sign(
-          { userId: user.id },
-          process.env.REFRESH_TOKEN_SECRET,
           { expiresIn: "1d" }
         );
 
-        res.cookie("refreshToken", refreshToken, {
-          httpOnly: true,
-          maxAge: 24 * 60 * 60 * 1000,
-        });
+        // const refreshToken = jwt.sign(
+        //   { userId: user.id },
+        //   process.env.REFRESH_TOKEN_SECRET,
+        //   { expiresIn: "1d" }
+        // );
+
+        // res.cookie("refreshToken", refreshToken, {
+        //   httpOnly: true,
+        //   maxAge: 24 * 60 * 60 * 1000,
+        // });
 
         delete user.password;
 
@@ -172,7 +173,7 @@ export const login = async (req, res) => {
           success: true,
           message: "Login successful",
           data: {
-            accessToken: accessToken,
+            token: accessToken,
             user: user,
           },
         });
@@ -254,10 +255,11 @@ export const refreshToken = async (req, res) => {
 
 export const logout = async (req, res) => {
   try {
-    res.clearCookie("refreshToken");
-    return res
-      .status(200)
-      .json({ success: true, message: "Logout successful" });
+    const token = req.headers.authorization.split(" ")[1];
+
+    tokenBlacklist.push(token);
+
+    res.status(200).json({ success: true, message: "Logout successful" });
   } catch (error) {
     console.log("Error: " + error.message);
     return res.status(500).json({ success: false, message: "Server Error" });
@@ -474,6 +476,31 @@ export const profilePublic = async (req, res) => {
     return res
       .status(200)
       .json({ success: true, data: user, message: "User found" });
+  } catch (error) {
+    console.log("Error: " + error.message);
+    return res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+export const verifyToken = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    return res
+      .status(200)
+      .json({ success: true, data: user, message: "Verified token" });
   } catch (error) {
     console.log("Error: " + error.message);
     return res.status(500).json({ success: false, message: "Server Error" });

@@ -12,6 +12,7 @@ import {
   refreshToken,
   register,
   updateProfile,
+  verifyToken,
 } from "../controllers/UserController.js";
 import authenticate from "../middlewares/authenticate.js";
 import upload from "../utils/multer.js";
@@ -21,7 +22,8 @@ const UserRoute = Router();
 // all users
 UserRoute.post("/register", register);
 UserRoute.post("/login", login);
-UserRoute.post("/refresh_token", refreshToken);
+// UserRoute.post("/refresh_token", refreshToken);
+UserRoute.post("/verify_token", authenticate, verifyToken);
 UserRoute.post("/profile", authenticate, profile);
 UserRoute.post("/logout", authenticate, logout);
 UserRoute.put(
