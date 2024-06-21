@@ -7,6 +7,77 @@ import {
 import prisma from "../prisma/prisma.js";
 import storage from "../utils/firebase.js";
 
+export const getProjectByAuthorId = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const page = parseInt(req.query.page, 10) || 1;
+
+    if (isNaN(limit) || isNaN(page) || limit <= 0 || page <= 0) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid limit or page parameter" });
+    }
+
+    const offset = (page - 1) * limit;
+
+    const count = await prisma.project.count({
+      where: {
+        authorId: userId,
+      },
+    });
+    console.log(`Total Projects Count: ${count}`);
+
+    const totalPages = Math.ceil(count / limit);
+
+    const projects = await prisma.project.findMany({
+      where: {
+        authorId: userId,
+      },
+      select: {
+        id: true,
+        title: true,
+        image: true,
+        authorId: true,
+        createdAt: true,
+        updatedAt: true,
+        author: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
+        skillsIds: true,
+        skills: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+          },
+        },
+      },
+      take: limit,
+      skip: offset,
+    });
+
+    const nextPage = page < totalPages ? page + 1 : null;
+    const prevPage = page > 1 ? page - 1 : null;
+
+    res.status(200).json({
+      success: true,
+      data: projects,
+      message: "My Projects",
+      nextPage,
+      prevPage,
+      totalPages,
+    });
+  } catch (error) {
+    console.error("Error: ", error.message);
+    return res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
 export const createProject = async (req, res) => {
   try {
     const userId = req.user.userId;

@@ -7,6 +7,7 @@ import {
   getProjectByIdPublic,
   deleteProject,
   updateProject,
+  getProjectByAuthorId,
 } from "../controllers/ProjectController.js";
 import authenticate from "../middlewares/authenticate.js";
 import upload from "../utils/multer.js";
@@ -20,6 +21,7 @@ ProjectRoute.post(
   createProject
 );
 
+ProjectRoute.get("/myprojects", authenticate, getProjectByAuthorId);
 ProjectRoute.get("/projects", authenticate, getAllProjects);
 ProjectRoute.get("/projects/:id", authenticate, getProjectById);
 ProjectRoute.delete("/projects/:id", authenticate, deleteProject);
