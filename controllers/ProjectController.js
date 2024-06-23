@@ -41,6 +41,9 @@ export const getProjectByAuthorId = async (req, res) => {
         authorId: true,
         createdAt: true,
         updatedAt: true,
+        summary: true,
+        demo: true,
+        github: true,
         author: {
           select: {
             id: true,
@@ -81,10 +84,18 @@ export const getProjectByAuthorId = async (req, res) => {
 export const createProject = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { title, description, skills } = req.body;
+    const { title, description, skills, summary, demo, github } = req.body;
     const file = req.file;
 
-    if (!title || !description || !skills || !file) {
+    if (
+      !title ||
+      !description ||
+      !skills ||
+      !file ||
+      !summary ||
+      !demo ||
+      !github
+    ) {
       return res
         .status(400)
         .json({ success: false, message: "All fields are required" });
@@ -114,6 +125,9 @@ export const createProject = async (req, res) => {
         image: url,
         imageRef: imageRef,
         authorId: userId,
+        summary,
+        demo,
+        github,
       },
     });
 
@@ -179,6 +193,11 @@ export const getAllProjectsPublic = async (req, res) => {
         description: true,
         image: true,
         authorId: true,
+        createdAt: true,
+        updatedAt: true,
+        summary: true,
+        demo: true,
+        github: true,
         author: {
           select: {
             id: true,
@@ -239,6 +258,11 @@ export const getProjectByIdPublic = async (req, res) => {
         description: true,
         image: true,
         authorId: true,
+        createdAt: true,
+        updatedAt: true,
+        summary: true,
+        demo: true,
+        github: true,
         author: {
           select: {
             id: true,
@@ -349,10 +373,10 @@ export const updateProject = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.userId;
-    const { title, description, skills } = req.body;
+    const { title, description, skills, summary, demo, github } = req.body;
     const file = req.file;
 
-    if (!title || !description || !skills) {
+    if (!title || !description || !skills || !summary || !demo || !github) {
       return res
         .status(400)
         .json({ success: false, message: "All fields are required" });
@@ -403,6 +427,9 @@ export const updateProject = async (req, res) => {
         description: description,
         imageRef: imageRef,
         image: url,
+        summary: summary,
+        demo: demo,
+        github: github,
       },
     });
 

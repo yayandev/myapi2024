@@ -50,8 +50,21 @@ model Project {
   skillsIds String[] @db.ObjectId
   skills Skill[] @relation(fields: [skillsIds], references: [id])
   description String
+  summary String
+  demo String @default("")
+  github String @default("")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-
+model Contact {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  email String @default("")
+  github String @default("")
+  linkedin String @default("")
+  twitter String @default("")
+  instagram String @default("")
+  facebook String @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
