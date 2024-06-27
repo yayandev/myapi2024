@@ -27,7 +27,12 @@ export const sendEmail = async (req, res) => {
       from: process.env.EMAIL_ADDRESS,
       to: "yayanfathurohman20@gmail.com",
       subject: "yayandev.com - Seseorang Mengirimkan Email Lewat Form!",
-      html: body,
+      html: `
+      <h1>Hai Yayan</h1>
+      <p>${name} mengirimu pesan.</p>
+      <p>${body}</p>
+      <a href="mailto:${email}">${email}</a>
+      `,
     };
 
     transporter.sendMail(mailOptions, (error, info) => {
