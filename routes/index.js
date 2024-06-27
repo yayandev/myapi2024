@@ -4,6 +4,7 @@ import SkillRoute from "./SkillRoute.js";
 import ProjectRoute from "./ProjectRoute.js";
 import ContactRoute from "./ContactRoute.js";
 import SertiRoute from "./SertiRoute.js";
+import sendEmailRoute from "./SendEmailRoute.js";
 const router = Router();
 
 router.get("/", (req, res) => {
@@ -15,4 +16,5 @@ router.use(SkillRoute);
 router.use(ProjectRoute);
 router.use(ContactRoute);
 router.use(SertiRoute);
+router.use(sendEmailRoute);
 export default router;
