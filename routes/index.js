@@ -5,6 +5,7 @@ import ProjectRoute from "./ProjectRoute.js";
 import ContactRoute from "./ContactRoute.js";
 import SertiRoute from "./SertiRoute.js";
 import sendEmailRoute from "./SendEmailRoute.js";
+import PostRoute from "./PostRoute.js";
 const router = Router();
 
 router.get("/", (req, res) => {
@@ -17,4 +18,5 @@ router.use(ProjectRoute);
 router.use(ContactRoute);
 router.use(SertiRoute);
 router.use(sendEmailRoute);
+router.use(PostRoute);
 export default router;

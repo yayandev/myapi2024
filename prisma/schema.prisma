@@ -26,6 +26,7 @@ model User {
   projects Project[]
   sertis Serti[]
   educations Education[]
+  posts Post[]
 }
 
 
@@ -90,4 +91,18 @@ model Education {
   author User @relation(fields: [authorId], references: [id])
   authorId String @db.ObjectId
   createdAt DateTime @default(now())
+}
+
+model Post {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  title String
+  slug String @unique
+  content String 
+  image String
+  imageRef String
+  tags Json
+  author User @relation(fields: [authorId], references: [id])
+  authorId String @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
