@@ -9,8 +9,47 @@ import storage from "../utils/firebase.js";
 
 export const getAllPosts = async (req, res) => {
   try {
-    const posts = await prisma.post.findMany();
-    res.status(200).json({ success: true, data: posts, message: "All Posts" });
+    let limit = parseInt(req.query.limit) || 5;
+    let page = parseInt(req.query.page) || 1;
+    let postsCount = await prisma.post.count();
+
+    if (isNaN(limit) || isNaN(page) || limit <= 0 || page <= 0) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid limit or page parameter" });
+    }
+
+    let offset = (page - 1) * limit;
+    let totalPages = Math.ceil(postsCount / limit);
+
+    let posts = await prisma.post.findMany({
+      skip: offset,
+      take: limit,
+    });
+
+    let nextPage = page + 1;
+    if (nextPage > totalPages) {
+      nextPage = null;
+    }
+
+    let prevPage = page - 1;
+    if (prevPage < 1) {
+      prevPage = null;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        posts,
+        total: postsCount,
+        limit: limit,
+        page: page,
+        totalPages: totalPages,
+        nextPage: nextPage,
+        prevPage: prevPage,
+      },
+      message: "All Posts",
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
