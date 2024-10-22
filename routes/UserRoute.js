@@ -7,6 +7,7 @@ import {
   getUserById,
   login,
   logout,
+  myStatistiks,
   profile,
   profilePublic,
   refreshToken,
@@ -39,6 +40,7 @@ UserRoute.patch("/profile", authenticate, updateProfile);
 UserRoute.get("/users", authenticate, onlyadmin, getAllUsers);
 UserRoute.get("/users/:id", authenticate, onlyadmin, getUserById);
 UserRoute.post("/users", authenticate, onlyadmin, createUser);
+UserRoute.get("/mystatistiks", authenticate, myStatistiks);
 
 // public
 UserRoute.get("/users/public/:id", profilePublic);

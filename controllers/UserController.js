@@ -506,3 +506,37 @@ export const verifyToken = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+
+export const myStatistiks = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const postsCount = await prisma.post.count({
+      where: {
+        authorId: userId,
+      },
+    });
+
+    const projectsCount = await prisma.project.count({
+      where: {
+        authorId: userId,
+      },
+    });
+
+    const skillsCount = await prisma.skill.count({
+      where: {
+        authorId: userId,
+      },
+    });
+
+    return res
+      .status(200)
+      .json({
+        success: true,
+        data: { postsCount, projectsCount, skillsCount },
+        message: "My statistiks",
+      });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
