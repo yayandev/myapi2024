@@ -105,7 +105,7 @@ export const createPost = async (req, res) => {
 
     const metadata = {
       contentType: file.mimetype,
-      contentDisposition: `inline; filename="${Date.now()}.${
+      contentDisposition: `inline; filename="posts/${Date.now()}.${
         file.mimetype.split("/")[1]
       }"`,
     };
@@ -245,7 +245,7 @@ export const updatePost = async (req, res) => {
 
       const metadata = {
         contentType: file.mimetype,
-        contentDisposition: `inline; filename="${Date.now()}.${
+        contentDisposition: `inline; filename="posts/${Date.now()}.${
           file.mimetype.split("/")[1]
         }"`,
       };
