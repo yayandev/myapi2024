@@ -99,13 +99,13 @@ export const createPost = async (req, res) => {
         .json({ success: false, message: "Slug is not unique" });
     }
 
-    const imageRef = `posts/${Date.now()}.${file.mimetype.split("/")[1]}`;
+    const imageRef = `${userId}-${Date.now()}.${file.mimetype.split("/")[1]}`;
 
     const storageRef = ref(storage, imageRef);
 
     const metadata = {
-      contentType: file.mimetype,
-      contentDisposition: `inline; filename="posts/${Date.now()}.${
+      contentType: file.mimetype.split("/")[1],
+      contentDisposition: `inline; filename="${userId}-${Date.now()}.${
         file.mimetype.split("/")[1]
       }"`,
     };
@@ -233,25 +233,28 @@ export const updatePost = async (req, res) => {
 
     let tagsJson = JSON.parse(tags);
 
-    let imageRef = post.imageRef;
-    let url = post.image;
+    let imageRef = post.imageRef; // Ambil imageRef lama
+    let url = post.image; // Ambil URL gambar lama
 
     if (file) {
+      // Hapus gambar lama jika ada
+      if (post.imageRef) {
+        const oldImageRef = ref(storage, post.imageRef);
+        await deleteObject(oldImageRef).catch((error) => {
+          console.error("Error deleting old image:", error.message);
+        });
+      }
+
+      // Buat referensi baru untuk gambar yang diunggah
+      imageRef = `${userId}-${Date.now()}.${file.mimetype.split("/")[1]}`;
       const storageRef = ref(storage, imageRef);
-
-      await deleteObject(storageRef);
-
-      imageRef = `posts/${Date.now()}.${file.mimetype.split("/")[1]}`;
 
       const metadata = {
         contentType: file.mimetype,
-        contentDisposition: `inline; filename="posts/${Date.now()}.${
-          file.mimetype.split("/")[1]
-        }"`,
+        contentDisposition: `inline; filename="${imageRef}"`,
       };
 
       const snapshot = await uploadBytes(storageRef, file.buffer, metadata);
-
       url = await getDownloadURL(snapshot.ref);
     }
 
@@ -264,7 +267,7 @@ export const updatePost = async (req, res) => {
         content: content,
         slug: slug,
         tags: tagsJson,
-        imageRef: imageRef,
+        imageRef,
         image: url,
       },
     });
