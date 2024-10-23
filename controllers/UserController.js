@@ -4,6 +4,21 @@ import jwt from "jsonwebtoken";
 import storage from "../utils/firebase.js";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { tokenBlacklist } from "../utils/Token.js";
+import nodemailer from "nodemailer";
+import crypto from "crypto";
+
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
+  auth: {
+    user: process.env.EMAIL_ADDRESS,
+    pass: process.env.EMAIL_PASSWORD,
+  },
+  tls: {
+    version: "TLSv1.2",
+  },
+});
 
 export const getAllUsers = async (req, res) => {
   try {
@@ -529,13 +544,161 @@ export const myStatistiks = async (req, res) => {
       },
     });
 
-    return res
-      .status(200)
-      .json({
+    return res.status(200).json({
+      success: true,
+      data: { postsCount, projectsCount, skillsCount },
+      message: "My statistiks",
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const forgotPassword = async (req, res) => {
+  try {
+    const email = req.body.email;
+
+    if (!email) {
+      return res
+        .status(400)
+        .json({ success: false, message: "All fields are required" });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: {
+        email: email,
+      },
+    });
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    let kode = crypto.randomBytes(32).toString("hex") + user.id + Date.now();
+
+    let newOtp = await prisma.otp.create({
+      data: {
+        userId: user.id,
+        otp: kode,
+        email: email,
+      },
+    });
+
+    if (!newOtp) {
+      return res
+        .status(500)
+        .json({ success: false, message: "Failed to send" });
+    }
+
+    const mailOptions = {
+      from: process.env.EMAIL_ADDRESS,
+      to: email,
+      subject: "Forgot Password - yayandev.com",
+      html: `
+      <h1>Forgot Password</h1>
+      <p>Click the link below to reset your password</p>
+      <a href="${process.env.FE_URL}/reset-password/${kode}">Reset Password</a>
+      `,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log(error);
+        res.status(500).json({ success: false, message: error.message });
+      }
+      // else {
+      //   const mailOptions2 = {
+      //     from: process.env.EMAIL_ADDRESS,
+      //     to: email,
+      //     subject: `Forgot Password - yayandev.com`,
+      //     html: `
+      //     <h1>Forgot Password</h1>
+      //     <p>Click the link below to reset your password</p>
+      //     <a href="${process.env.FE_URL}/reset-password/${kode}">Reset Password</a>
+      //     `,
+      //   };
+
+      //   transporter.sendMail(mailOptions2, (err, info) => {
+      //     if (err) {
+      //       console.log("Error sending email " + err);
+      //     }
+      //   });
+
+      res.status(200).json({
         success: true,
-        data: { postsCount, projectsCount, skillsCount },
-        message: "My statistiks",
+        message:
+          "Please check your email, reset password link has been sent to your email",
+        info,
       });
+      // }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  try {
+    const token = req.params.token;
+    const { password, confirmPassword } = req.body;
+
+    let otpReady = await prisma.otp.findUnique({
+      where: {
+        otp: token,
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    if (!otpReady) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Token not found" });
+    }
+
+    if (!otpReady.status) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Token already used" });
+    }
+
+    if (!password || !confirmPassword) {
+      return res
+        .status(400)
+        .json({ success: false, message: "All fields are required" });
+    }
+
+    if (password !== confirmPassword) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Passwords do not match" });
+    }
+
+    const salt = await bcryptjs.genSalt(10);
+    const hashedPassword = await bcryptjs.hash(password, salt);
+
+    await prisma.otp.update({
+      where: {
+        id: otpReady.id,
+      },
+      data: {
+        status: false,
+      },
+    });
+
+    await prisma.user.update({
+      where: {
+        id: otpReady.userId,
+      },
+      data: {
+        password: hashedPassword,
+      },
+    });
+
+    res.status(200).json({ success: true, message: "Password changed" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

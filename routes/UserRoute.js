@@ -3,6 +3,7 @@ import {
   changeAvatar,
   changePassword,
   createUser,
+  forgotPassword,
   getAllUsers,
   getUserById,
   login,
@@ -12,6 +13,7 @@ import {
   profilePublic,
   refreshToken,
   register,
+  resetPassword,
   updateProfile,
   verifyToken,
 } from "../controllers/UserController.js";
@@ -23,6 +25,8 @@ const UserRoute = Router();
 // all users
 UserRoute.post("/register", register);
 UserRoute.post("/login", login);
+UserRoute.post("/forgot_password", forgotPassword);
+UserRoute.post("/reset_password/:token", resetPassword);
 // UserRoute.post("/refresh_token", refreshToken);
 UserRoute.post("/verify_token", authenticate, verifyToken);
 UserRoute.post("/profile", authenticate, profile);
